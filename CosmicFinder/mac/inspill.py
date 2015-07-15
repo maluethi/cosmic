@@ -1,5 +1,13 @@
 import sys
 
+# Kazu's temporary hack! 
+from ROOT import gSystem
+gSystem.Load('libLArLite_DataFormat')
+
+import matplotlib
+matplotlib.use('Qt4Agg')
+# Kazu's temporary hack! 
+
 if len(sys.argv) < 2:
     msg  = '\n'
     msg += "Usage 1: %s $INPUT_ROOT_FILE\n" % sys.argv[0]
