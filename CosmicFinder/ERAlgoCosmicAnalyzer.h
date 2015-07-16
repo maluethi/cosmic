@@ -16,6 +16,8 @@
 #define ERTOOL_ERALGOCOSMICANALYZER_H
 
 #include "ERTool/Base/AlgoBase.h"
+#include "LArUtil/Geometry.h"
+#include "GeoAlgo/GeoAlgo.h"
 
 namespace ertool {
 
@@ -51,7 +53,8 @@ namespace ertool {
     void TouchTop(const EventData &data, ParticleGraph& graph);
 
     bool InSpill(const double& time, int& counter);
-
+    
+    bool ThroughTop(const ertool::Track&);
 
     void SetSpill(double spilll_start, double spill_end){
     	_spill_start = spilll_start;

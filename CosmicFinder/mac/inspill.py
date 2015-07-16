@@ -32,11 +32,11 @@ for x in xrange(len(sys.argv)-1):
 my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 
 # Specify output root file name
-my_proc.set_ana_output_file("ertool_hist.root")
+#my_proc.set_ana_output_file("ertool_hist.root")
 
 # Create ERTool algorithm (empty base class for this example)
-#my_algo = ertool.ERAlgoCosmicAnalyzer()
-my_algo = ertool.AlgoMichelE()
+my_algo = ertool.ERAlgoCosmicAnalyzer()
+#my_algo = ertool.AlgoMichelE()
 
 # Create ERTool analysis (empty base class for this example)
 #my_ana = ertool.AnaBase()
@@ -55,7 +55,7 @@ my_anaunit.SetTrackProducer(True,"mcreco")
 my_anaunit._mgr.AddAlgo(my_algo)
 #my_anaunit._mgr.AddAna(my_ana)
 #my_ana._mode =True # True = Select. False = Fill mode
-#my_proc.add_process(my_anaunit)
+my_proc.add_process(my_anaunit)
 
 # run!
 my_proc.run()
