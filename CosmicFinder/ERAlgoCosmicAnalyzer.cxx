@@ -36,9 +36,6 @@ namespace ertool {
 
   bool ERAlgoCosmicAnalyzer::Reconstruct(const EventData &data, ParticleGraph& graph)
   {
-    auto geom = ::larutil::Geometry::GetME();
-    
-//     	_DetWidth = 2 * geom->DetHalfWidth();
 		int showers_inspill = 0;
 		int tracks_inspill = 0;
 
@@ -59,6 +56,7 @@ namespace ertool {
 			 
 			 if(ThroughTop(track)) 
 				tracks_touchtop++;
+			 ThroughFaces(track);
 			 
 // 			 std::cout << "DEBUG: start " << trackStart[1] << " " << geom->DetHalfHeight() << std::endl;
 // 			 std::cout << "DEBUG:   end " << trackEnd[1] << std::endl;
@@ -105,22 +103,61 @@ namespace ertool {
   
   bool ERAlgoCosmicAnalyzer::ThroughTop(const ertool::Track& InputTrack)
   {
-	  // Get detector geometry variables
-	  auto DetGeometry = ::larutil::Geometry::GetME();
+    // Get detector geometry variables
+    auto DetGeometry = ::larutil::Geometry::GetME();
 	  
-	  // Construct detector box and Geometry algorithms
-	  geoalgo::AABox DetectorBox(0.0,-DetGeometry->DetHalfHeight(),0.0,2*DetGeometry->DetHalfWidth(),DetGeometry->DetHalfHeight(),DetGeometry->DetLength());
-	  geoalgo::GeoAlgo GeometryAlgo;
+    // Construct detector box and Geometry algorithms
+    geoalgo::AABox DetectorBox(0.0,-DetGeometry->DetHalfHeight(),0.0,2*DetGeometry->DetHalfWidth(),DetGeometry->DetHalfHeight(),DetGeometry->DetLength());
+    geoalgo::GeoAlgo GeometryAlgo;
 	  
-	  // Find intersection points of the track with the box
-	  std::vector<geoalgo::Vector> IntersectionPoints = GeometryAlgo.Intersection(DetectorBox,InputTrack);
+    // Find intersection points of the track with the box
+    std::vector<geoalgo::Vector> IntersectionPoints = GeometryAlgo.Intersection(DetectorBox,InputTrack);
+    
+    if(IntersectionPoints.size()>2) std::cout << IntersectionPoints.size() << std:: endl;
 	  
-	  // Return true if the track entered the top
-	  if(IntersectionPoints.size() && IntersectionPoints.front().at(1) == DetGeometry->DetHalfHeight())
-		  return true;
-	  else 
-		  return false;
+    // Return true if the track entered the top
+    if(IntersectionPoints.size() && IntersectionPoints.front().at(1) == DetGeometry->DetHalfHeight())
+      return true;
+    else 
+      return false;
   }
+  
+  // Function to get TPC penetration faces array=(top, bottom, anode, kathode, upstream, downstream)
+std::array< unsigned int, 6 > ERAlgoCosmicAnalyzer::ThroughFaces(const Track& InputTrack)
+{
+  // Initialize output array
+  std::array<unsigned int,6> OutputArray = {0,0,0,0,0,0};
+  
+  // Get detector geometry variables  
+  auto DetGeometry = ::larutil::Geometry::GetME();
+  
+  // Construct detector box and Geometry algorithms
+  geoalgo::AABox DetectorBox(0.0,-DetGeometry->DetHalfHeight(),0.0,2*DetGeometry->DetHalfWidth(),DetGeometry->DetHalfHeight(),DetGeometry->DetLength());
+  geoalgo::GeoAlgo GeometryAlgo;
+    
+  // Find intersection points of the track with the box
+  std::vector<geoalgo::Vector> IntersectionPoints = GeometryAlgo.Intersection(DetectorBox,InputTrack);
+  
+  for(const auto& point : IntersectionPoints)
+  {
+    if(point.at(1) == DetGeometry->DetHalfHeight()) 
+      OutputArray.at(0)++;
+    else if(point.at(1) == -DetGeometry->DetHalfHeight())
+      OutputArray.at(1)++;
+    else if(point.at(0) == 0.0)
+      OutputArray.at(2)++;
+    else if(point.at(0) == 2*DetGeometry->DetHalfWidth())
+      OutputArray.at(3)++;
+    else if(point.at(2) == 0.0)
+      OutputArray.at(4)++;
+    else if(point.at(2) == DetGeometry->DetLength())
+      OutputArray.at(5)++;
+  }
+  if(IntersectionPoints.size() > 2) std::cout << OutputArray.at(0) << " " << OutputArray.at(1) << " " << OutputArray.at(2) << " " << OutputArray.at(3) << " " << OutputArray.at(4) << " " << OutputArray.at(5) << std::endl;
+  
+  return OutputArray;
+}
+
 
   void ERAlgoCosmicAnalyzer::TouchTop(const EventData &data, ParticleGraph& graph)
   {

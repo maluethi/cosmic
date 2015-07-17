@@ -55,6 +55,9 @@ namespace ertool {
     bool InSpill(const double& time, int& counter);
     
     bool ThroughTop(const ertool::Track&);
+    
+    // Function to get TPC penetration faces array=(top, bottom, anode, kathode, upstream, downstream)
+    std::array<unsigned int, 6> ThroughFaces(const ertool::Track&);
 
     void SetSpill(double spilll_start, double spill_end){
     	_spill_start = spilll_start;
