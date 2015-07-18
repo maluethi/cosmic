@@ -42,6 +42,9 @@ namespace ertool {
 		int tracks_inspill = 0;
 
 		int tracks_touchtop = 0;
+		
+		auto DetGeometry = ::larutil::Geometry::GetME();
+		geoalgo::AABox DetectorBox(0.0,-DetGeometry->DetHalfHeight(),0.0,2*DetGeometry->DetHalfWidth(),DetGeometry->DetHalfHeight(),DetGeometry->DetLength());
 
 
 		// loop over showers
@@ -91,34 +94,19 @@ namespace ertool {
 			       case downstream:
 				 _EnterFaces.at(downstream)++;
 				 break;
-			     }
+			       case inside:
+				 _EnterFaces.at(inside)++;
+			   }
 			   
-			   
-// 			   for(const auto& face_no : FaceVector)
-// 			   {
-// 			     switch(face_no)
-// 			     {
-// 			       case top:
-// 				 _EnterFaces.at(top)++;
-// 				 break;
-// 			       case bottom:
-// 				 _EnterFaces.at(bottom)++;
-// 				 break;
-// 			       case anode:
-// 				 _EnterFaces.at(anode)++;
-// 				 break;
-// 			       case cathode:
-// 				 _EnterFaces.at(cathode)++;
-// 				 break;
-// 			       case upstream:
-// 				 _EnterFaces.at(upstream)++;
-// 				 break;
-// 			       case downstream:
-// 				 _EnterFaces.at(downstream)++;
-// 				 break;
-// 			     }
-// 			   }
+			   // Look for problematic tacks
+			   if( FaceVector.front() == inside && !(FaceVector.back() == anode || FaceVector.back() == cathode) )
+			   {
+// 			     std::cout << FaceVector.size() << " " << FaceVector.front() << " " << FaceVector.back() << std::endl;
+			     _inside_frame++;
+			   }
+			     
 			 }
+			 
 			 
 // 			 std::cout << "DEBUG: start " << track.front() << std::endl;
 // 			 std::cout << "DEBUG: start " << trackStart[1] << " " << geom->DetHalfHeight() << std::endl;
@@ -156,6 +144,7 @@ namespace ertool {
 	    std::cout << enterface << " ";
 	  }
 	  std::cout << std::endl;
+	  std::cout << "inside frame: " << _inside_frame << std::endl;
   }
 
 
@@ -207,16 +196,19 @@ std::vector<unsigned int> ERAlgoCosmicAnalyzer::ThroughFaces(const Track& InputT
   // Find intersection points of the track with the box
   std::vector<geoalgo::Vector> IntersectionPoints = GeometryAlgo.Intersection(DetectorBox,InputTrack);
   
-  float epsilon = 1;
+  float epsilon = std::numeric_limits<double>::round_error();
+  
+  if(DetectorBox.Contain(InputTrack.front()))
+  {
+    FacesVector.push_back(inside);
+  }
   
   for(const auto& point : IntersectionPoints)
   {
     if(point.at(1) <= DetGeometry->DetHalfHeight() + epsilon && point.at(1) >= DetGeometry->DetHalfHeight() - epsilon) 
       FacesVector.push_back(top);
     else if(point.at(1) <= -DetGeometry->DetHalfHeight() + epsilon && point.at(1) >= -DetGeometry->DetHalfHeight() - epsilon)
-    {
       FacesVector.push_back(bottom);
-    }
     else if(point.at(0) <= 0.0 + epsilon && point.at(0) >= 0.0 - epsilon)
       FacesVector.push_back(anode);
     else if(point.at(0) <= 2*DetGeometry->DetHalfWidth() + epsilon && point.at(0) >= 2*DetGeometry->DetHalfWidth() - epsilon)
@@ -225,6 +217,11 @@ std::vector<unsigned int> ERAlgoCosmicAnalyzer::ThroughFaces(const Track& InputT
       FacesVector.push_back(upstream);
     else if(point.at(2) <= DetGeometry->DetLength() + epsilon && point.at(2) >= DetGeometry->DetLength() - epsilon)
       FacesVector.push_back(downstream); 
+  }
+  
+  if(DetectorBox.Contain(InputTrack.back()))
+  {
+    FacesVector.push_back(inside);
   }
   
   if(FacesVector.size()>0 && FacesVector.front() == bottom) 

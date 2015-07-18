@@ -69,13 +69,14 @@ namespace ertool {
 
     int _tracks_touchtop = 0;
     
-    std::array<unsigned int,6> _EnterFaces;
-
+    std::array<unsigned int,7> _EnterFaces;
+    
+    unsigned int _inside_frame = 0;
     double _spill_start;
     double _spill_end;
 
     bool _verbosity = false;
-    enum Face {top, bottom, anode, cathode, upstream, downstream};
+    enum Face {top, bottom, anode, cathode, upstream, downstream, inside};
   };
 }
 #endif
