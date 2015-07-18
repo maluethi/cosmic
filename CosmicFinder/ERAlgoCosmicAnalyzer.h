@@ -56,8 +56,8 @@ namespace ertool {
     
     bool ThroughTop(const ertool::Track&);
     
-    // Function to get TPC penetration faces array=(top, bottom, anode, kathode, upstream, downstream)
-    std::array<unsigned int, 6> ThroughFaces(const ertool::Track&);
+    // Function to get TPC penetration faces (top = 0, bottom = 1, anode = 2, cathode = 3, upstream = 4, downstream = 5)
+    std::vector<unsigned int> ThroughFaces(const ertool::Track&);
 
     void SetSpill(double spilll_start, double spill_end){
     	_spill_start = spilll_start;
@@ -68,11 +68,14 @@ namespace ertool {
     int _showers_inspill = 0;
 
     int _tracks_touchtop = 0;
+    
+    std::array<unsigned int,6> _EnterFaces;
 
     double _spill_start;
     double _spill_end;
 
     bool _verbosity = false;
+    enum Face {top, bottom, anode, cathode, upstream, downstream};
   };
 }
 #endif

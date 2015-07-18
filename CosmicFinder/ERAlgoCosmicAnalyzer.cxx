@@ -32,7 +32,9 @@ namespace ertool {
   }
 
   void ERAlgoCosmicAnalyzer::ProcessBegin()
-  {}
+  {
+    _EnterFaces = {0, 0, 0, 0, 0, 0};
+  }
 
   bool ERAlgoCosmicAnalyzer::Reconstruct(const EventData &data, ParticleGraph& graph)
   {
@@ -41,6 +43,7 @@ namespace ertool {
 
 		int tracks_touchtop = 0;
 
+
 		// loop over showers
 		for (auto const& p : graph.GetParticleNodes(RecoType_t::kShower)) {
 			auto const& shower = data.Shower(graph.GetParticle(p).RecoID());
@@ -48,16 +51,76 @@ namespace ertool {
 
 
 		}
+		
+// 		std::cout << "New event!" << std::endl;
 
 		// loop over tracks
 		for (auto const& t : graph.GetParticleNodes(RecoType_t::kTrack)) {
 			auto const& track = data.Track(graph.GetParticle(t).RecoID());
 			InSpill(track._time, tracks_inspill);
 			 
-			 if(ThroughTop(track)) 
-				tracks_touchtop++;
-			 ThroughFaces(track);
+// 			 if(ThroughTop(track)) 
+// 				tracks_touchtop++;
+			 std::vector<unsigned int> FaceVector = ThroughFaces(track);
 			 
+// 			 for(const auto& iter : FaceVector)
+// 			 {
+// 			   std::cout << iter << " ";
+// 			 }
+// 			 if(FaceVector.size()) std::cout << std::endl;
+			 
+			 if(FaceVector.size())
+			 {
+			   switch(FaceVector.front())
+			   {
+			       case top:
+				 _EnterFaces.at(top)++;
+				 break;
+			       case bottom:
+				 _EnterFaces.at(bottom)++;
+				 break;
+			       case anode:
+				 _EnterFaces.at(anode)++;
+				 break;
+			       case cathode:
+				 _EnterFaces.at(cathode)++;
+				 break;
+			       case upstream:
+				 _EnterFaces.at(upstream)++;
+				 break;
+			       case downstream:
+				 _EnterFaces.at(downstream)++;
+				 break;
+			     }
+			   
+			   
+// 			   for(const auto& face_no : FaceVector)
+// 			   {
+// 			     switch(face_no)
+// 			     {
+// 			       case top:
+// 				 _EnterFaces.at(top)++;
+// 				 break;
+// 			       case bottom:
+// 				 _EnterFaces.at(bottom)++;
+// 				 break;
+// 			       case anode:
+// 				 _EnterFaces.at(anode)++;
+// 				 break;
+// 			       case cathode:
+// 				 _EnterFaces.at(cathode)++;
+// 				 break;
+// 			       case upstream:
+// 				 _EnterFaces.at(upstream)++;
+// 				 break;
+// 			       case downstream:
+// 				 _EnterFaces.at(downstream)++;
+// 				 break;
+// 			     }
+// 			   }
+			 }
+			 
+// 			 std::cout << "DEBUG: start " << track.front() << std::endl;
 // 			 std::cout << "DEBUG: start " << trackStart[1] << " " << geom->DetHalfHeight() << std::endl;
 // 			 std::cout << "DEBUG:   end " << trackEnd[1] << std::endl;
 
@@ -86,6 +149,13 @@ namespace ertool {
 	  std::cout << "total showers in spill:    " << _showers_inspill << std::endl;
 	  std::cout << "total tracks in spill:     " << _tracks_inspill << std::endl;
 	  std::cout << "total tracks touching top: " << _tracks_touchtop << std::endl;
+	  
+	  std::cout << "Enter faces: ";
+	  for(const auto& enterface : _EnterFaces)
+	  {
+	    std::cout << enterface << " ";
+	  }
+	  std::cout << std::endl;
   }
 
 
@@ -113,7 +183,6 @@ namespace ertool {
     // Find intersection points of the track with the box
     std::vector<geoalgo::Vector> IntersectionPoints = GeometryAlgo.Intersection(DetectorBox,InputTrack);
     
-    if(IntersectionPoints.size()>2) std::cout << IntersectionPoints.size() << std:: endl;
 	  
     // Return true if the track entered the top
     if(IntersectionPoints.size() && IntersectionPoints.front().at(1) == DetGeometry->DetHalfHeight())
@@ -123,10 +192,10 @@ namespace ertool {
   }
   
   // Function to get TPC penetration faces array=(top, bottom, anode, kathode, upstream, downstream)
-std::array< unsigned int, 6 > ERAlgoCosmicAnalyzer::ThroughFaces(const Track& InputTrack)
+std::vector<unsigned int> ERAlgoCosmicAnalyzer::ThroughFaces(const Track& InputTrack)
 {
   // Initialize output array
-  std::array<unsigned int,6> OutputArray = {0,0,0,0,0,0};
+  std::vector<unsigned int> FacesVector;
   
   // Get detector geometry variables  
   auto DetGeometry = ::larutil::Geometry::GetME();
@@ -138,24 +207,44 @@ std::array< unsigned int, 6 > ERAlgoCosmicAnalyzer::ThroughFaces(const Track& In
   // Find intersection points of the track with the box
   std::vector<geoalgo::Vector> IntersectionPoints = GeometryAlgo.Intersection(DetectorBox,InputTrack);
   
+  float epsilon = 1;
+  
   for(const auto& point : IntersectionPoints)
   {
-    if(point.at(1) == DetGeometry->DetHalfHeight()) 
-      OutputArray.at(0)++;
-    else if(point.at(1) == -DetGeometry->DetHalfHeight())
-      OutputArray.at(1)++;
-    else if(point.at(0) == 0.0)
-      OutputArray.at(2)++;
-    else if(point.at(0) == 2*DetGeometry->DetHalfWidth())
-      OutputArray.at(3)++;
-    else if(point.at(2) == 0.0)
-      OutputArray.at(4)++;
-    else if(point.at(2) == DetGeometry->DetLength())
-      OutputArray.at(5)++;
+    if(point.at(1) <= DetGeometry->DetHalfHeight() + epsilon && point.at(1) >= DetGeometry->DetHalfHeight() - epsilon) 
+      FacesVector.push_back(top);
+    else if(point.at(1) <= -DetGeometry->DetHalfHeight() + epsilon && point.at(1) >= -DetGeometry->DetHalfHeight() - epsilon)
+    {
+      FacesVector.push_back(bottom);
+    }
+    else if(point.at(0) <= 0.0 + epsilon && point.at(0) >= 0.0 - epsilon)
+      FacesVector.push_back(anode);
+    else if(point.at(0) <= 2*DetGeometry->DetHalfWidth() + epsilon && point.at(0) >= 2*DetGeometry->DetHalfWidth() - epsilon)
+      FacesVector.push_back(cathode);
+    else if(point.at(2) <= 0.0 + epsilon && point.at(2) >= 0.0 - epsilon)
+      FacesVector.push_back(upstream);
+    else if(point.at(2) <= DetGeometry->DetLength() + epsilon && point.at(2) >= DetGeometry->DetLength() - epsilon)
+      FacesVector.push_back(downstream); 
   }
-  if(IntersectionPoints.size() > 2) std::cout << OutputArray.at(0) << " " << OutputArray.at(1) << " " << OutputArray.at(2) << " " << OutputArray.at(3) << " " << OutputArray.at(4) << " " << OutputArray.at(5) << std::endl;
   
-  return OutputArray;
+  if(FacesVector.size()>0 && FacesVector.front() == bottom) 
+  {
+    std::cout << InputTrack.front() << " " << InputTrack.back() << std::endl;
+    for(const auto& scheiss : IntersectionPoints)
+    {
+      std::cout << scheiss << std::endl;
+    }
+  }
+  
+//   if(IntersectionPoints.size() > 2) 
+//   {
+//     for(const auto& Faces : FacesVector)
+//       std::cout << Faces << " ";
+//   
+//     std::cout <<  std::endl;
+//   }
+  
+  return FacesVector;
 }
 
 
