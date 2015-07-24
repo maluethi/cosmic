@@ -2,6 +2,8 @@
 #define ERTOOL_ERALGOCOSMICANALYZER_CXX
 
 #include "ERAlgoCosmicAnalyzer.h"
+#include <TH1.h>
+#include <TCanvas.h>
 
 namespace ertool {
 
@@ -100,7 +102,7 @@ namespace ertool {
 			   
 			   // Look for problematic tacks
 			   if( FaceVector.front() == inside && !(FaceVector.back() == anode || FaceVector.back() == cathode) )
-			   {
+			   {			     
 // 			     std::cout << FaceVector.size() << " " << FaceVector.front() << " " << FaceVector.back() << std::endl;
 			     _inside_frame++;
 			   }
@@ -133,18 +135,45 @@ namespace ertool {
 
   void ERAlgoCosmicAnalyzer::ProcessEnd(TFile* fout)
   {
-	  std::cout << "DATASET INFO" << std::endl;
-	  std::cout << "total showers in spill:    " << _showers_inspill << std::endl;
-	  std::cout << "total tracks in spill:     " << _tracks_inspill << std::endl;
-	  std::cout << "total tracks touching top: " << _tracks_touchtop << std::endl;
+    TH1I* FaceDiagram = new TH1I("Entry_Point","Entry_Point",_EnterFaces.size()+1,0,_EnterFaces.size()+1);
 	  
-	  std::cout << "Enter faces: ";
-	  for(const auto& enterface : _EnterFaces)
-	  {
-	    std::cout << enterface << " ";
-	  }
-	  std::cout << std::endl;
-	  std::cout << "inside frame: " << _inside_frame << std::endl;
+    std::cout << "DATASET INFO" << std::endl;
+    std::cout << "total showers in spill:    " << _showers_inspill << std::endl;
+    std::cout << "total tracks in spill:     " << _tracks_inspill << std::endl;
+    std::cout << "total tracks touching top: " << _tracks_touchtop << std::endl;
+    std::cout << "Enter faces: ";
+	  
+    for(const auto& enterface : _EnterFaces)
+    {
+      std::cout << enterface << " ";
+    }
+    
+    std::cout << std::endl;
+    std::cout << "inside frame: " << _inside_frame << std::endl;
+    
+    for(unsigned int bin = 0; bin < _EnterFaces.size(); bin++)
+    {
+      FaceDiagram->SetBinContent(bin+1,_EnterFaces.at(bin));
+    }
+    
+    FaceDiagram->SetBinContent(_EnterFaces.size()+1,_inside_frame);
+    
+    FaceDiagram->SetStats(0);
+    FaceDiagram->GetXaxis()->SetBinLabel(1,"Top");
+    FaceDiagram->GetXaxis()->SetBinLabel(2,"Bottom");
+    FaceDiagram->GetXaxis()->SetBinLabel(3,"Anode");
+    FaceDiagram->GetXaxis()->SetBinLabel(4,"Cathode");
+    FaceDiagram->GetXaxis()->SetBinLabel(5,"Upstream");
+    FaceDiagram->GetXaxis()->SetBinLabel(6,"Downstream");
+    FaceDiagram->GetXaxis()->SetBinLabel(7,"Inside");
+    FaceDiagram->GetXaxis()->SetBinLabel(8,"Inside w/ cut");
+    FaceDiagram->GetYaxis()->SetTitle("Number of Events");
+    
+    
+    TCanvas* C0 = new TCanvas("Entry Points","Entry Points",1000,500);
+    FaceDiagram->Draw();
+    C0 -> Print("FaceDiag.png","png");
+    
   }
 
 
@@ -224,14 +253,14 @@ std::vector<unsigned int> ERAlgoCosmicAnalyzer::ThroughFaces(const Track& InputT
     FacesVector.push_back(inside);
   }
   
-  if(FacesVector.size()>0 && FacesVector.front() == bottom) 
-  {
-    std::cout << InputTrack.front() << " " << InputTrack.back() << std::endl;
-    for(const auto& scheiss : IntersectionPoints)
-    {
-      std::cout << scheiss << std::endl;
-    }
-  }
+//   if(FacesVector.size()>0 && FacesVector.front() == bottom) 
+//   {
+//     std::cout << InputTrack.front() << " " << InputTrack.back() << std::endl;
+//     for(const auto& scheiss : IntersectionPoints)
+//     {
+//       std::cout << scheiss << std::endl;
+//     }
+//   }
   
 //   if(IntersectionPoints.size() > 2) 
 //   {
