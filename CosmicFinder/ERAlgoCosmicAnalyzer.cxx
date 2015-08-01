@@ -80,21 +80,27 @@ namespace ertool {
 			   {
 			       case top:
 				 _EnterFaces.at(top)++;
+				 graph.SetPrimary(kCosmicDaughter);
 				 break;
 			       case bottom:
 				 _EnterFaces.at(bottom)++;
+				 graph.SetPrimary(kCosmicDaughter);
 				 break;
 			       case anode:
 				 _EnterFaces.at(anode)++;
+				 graph.SetPrimary(kCosmicDaughter);
 				 break;
 			       case cathode:
 				 _EnterFaces.at(cathode)++;
+				 graph.SetPrimary(kCosmicDaughter);
 				 break;
 			       case upstream:
 				 _EnterFaces.at(upstream)++;
+				 graph.SetPrimary(kCosmicDaughter);
 				 break;
 			       case downstream:
 				 _EnterFaces.at(downstream)++;
+				 graph.SetPrimary(kCosmicDaughter);
 				 break;
 			       case inside:
 				 _EnterFaces.at(inside)++;
@@ -104,6 +110,7 @@ namespace ertool {
 			   if( FaceVector.front() == inside && !(FaceVector.back() == anode || FaceVector.back() == cathode) )
 			   {			     
 // 			     std::cout << FaceVector.size() << " " << FaceVector.front() << " " << FaceVector.back() << std::endl;
+			     graph.SetPrimary(kCosmicDaughter);
 			     _inside_frame++;
 			   }
 			     
